@@ -1,0 +1,218 @@
+body {
+    font-family: 'Roboto Mono', monospace;
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+}
+
+nav {
+    background-color: #333;
+    padding: 10px 0;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 20px;
+}
+
+nav ul li a {
+    color: #f0f0f0;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+nav ul li a:hover {
+    color: #ff6600;
+}
+
+#content {
+    margin: 20px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+}
+
+p {
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+button {
+    background-color: #ff6600;
+    color: #1a1a1a;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 16px;
+    margin: 10px;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #e65c00;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.top-right {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 5px;
+}
+
+.table-container {
+    overflow-x: auto;
+    margin: 20px auto;
+    border-radius: 10px;
+    background-color: #333;
+    padding: 20px;
+    width: 90%;
+    max-width: 1000px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #444;
+}
+
+th {
+    background-color: #444;
+    color: #ff6600;
+}
+
+tr:hover {
+    background-color: #555;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #2a2a2a;
+}
+
+
+#loginPopup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgb(198, 65, 24);
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.popup-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.close-button {
+    align-self: flex-end;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+#loginPopup input {
+    margin: 10px 0;
+    padding: 10px;
+    width: 100%;
+}
+
+#loginPopup button {
+    padding: 10px 20px;
+    background-color: #444;
+    color: #ff6600;
+    border: none;
+    cursor: pointer;
+}
+
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.form-container form {
+    display: flex;
+    flex-direction: column;
+    width: 400px;
+    background-color: #f4f4f4;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-container input, .form-container button {
+    margin: 10px -10px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.form-container button {
+    background-color: #444;
+    color: #ff6600;
+    border: none;
+    cursor: pointer;
+}
+
+.form-container button:hover {
+    background-color: #333;
+}
+
+.headers-container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.headers-container div {
+    width: 45%;
+}
+
+.headers-container pre {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border: 1px solid #ddd;
+    overflow-x: auto;
+}

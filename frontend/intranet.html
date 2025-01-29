@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intranet</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+ 
+    <nav>
+        <ul>
+            <li><a href="index.html">Homepage</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="contacts.html">Contacts</a></li>
+            <li><a href="intranet.html">Intranet</a></li>
+        </ul>
+    </nav>
+    <div class="top-right">
+        <button id="loginButton">Login</button>
+    </div>    
+    <div class="form-container">        
+        <h2>Add User</h2>
+        <form id="addUserForm">
+            <input type="text" name="userid" id="addUserid" placeholder="User ID" required>
+            <input type="text" name="name" id="addName" placeholder="Name" required>
+            <input type="text" name="alias" id="addAlias" placeholder="Alias" required>
+            <input type="email" name="email" id="addEmail" placeholder="Email" required>
+            <input type="text" name="role" id="addRole" placeholder="Role" required>
+            <button type="submit">Add User</button>
+        </form>
+    </div>
+    <script src="scripts.js"></script>
+</body>
+</html>

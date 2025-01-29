@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DEFAULT_ADMIN_USERNAME=""
+      - DEFAULT_ADMIN_EMAIL=""
+      - DEFAULT_ADMIN_PASSWORD=""
+      - SECRET="openssl rand -hex 32"
