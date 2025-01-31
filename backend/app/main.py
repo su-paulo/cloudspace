@@ -6,10 +6,25 @@ from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from . import models, schemas, crud, database, utils
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
+import base64
 
-# Secret key to encode and decode JWT tokens
-SECRET_KEY = "your_secret_key"
-ALGORITHM = "HS256"
+# Load the private and public keys
+with open("path/to/private_key.pem", "rb") as f:
+    PRIVATE_KEY = serialization.load_pem_private_key(
+        f.read(),
+        password=None,
+        backend=default_backend()
+    )
+
+with open("path/to/public_key.pem", "rb") as f:
+    PUBLIC_KEY = serialization.load_pem_public_key(
+        f.read(),
+        backend=default_backend()
+    )
+
+ALGORITHM = "RS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 app = FastAPI()
@@ -38,7 +53,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, PRIVATE_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 def get_user(db, username: str):
@@ -72,7 +87,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, PUBLIC_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -90,7 +105,7 @@ async def get_current_admin(token: str = Depends(oauth2_scheme), db: Session = D
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, PUBLIC_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
@@ -158,13 +173,13 @@ def delete_user(user_id: int, db: Session = Depends(database.get_db), current_ad
 def create_admin(admin: schemas.AdminCreate, db: Session = Depends(database.get_db), current_admin: schemas.Admin = Depends(get_current_admin)):
     return crud.create_admin(db=db, admin=admin)
 
-@app.get("/api/v1/admins/", response_model=list[schemas.Admin])
-def read_admins(skip: int = 0, limit: int = 10, db: Session = Depends(database.get_db)):
+@app.get("/api/v1/admins/", response_model=list[schemas.Admin], dependencies=[Depends(oauth2_scheme)])
+def read_admins(skip: int = 0, limit: int = 10, db: Session = Depends(database.get_db), current_admin: schemas.Admin = Depends(get_current_admin)):
     admins = crud.get_admins(db, skip=skip, limit=limit)
     return admins
 
-@app.get("/api/v1/admins/{admin_id}", response_model=schemas.Admin)
-def read_admin(admin_id: int, db: Session = Depends(database.get_db)):
+@app.get("/api/v1/admins/{admin_id}", response_model=schemas.Admin, dependencies=[Depends(oauth2_scheme)])
+def read_admin(admin_id: int, db: Session = Depends(database.get_db), current_admin: schemas.Admin = Depends(get_current_admin)):
     db_admin = crud.get_admin(db, admin_id=admin_id)
     if db_admin is None:
         raise HTTPException(status_code=404, detail="Admin not found")
@@ -176,6 +191,26 @@ def delete_admin(admin_id: int, db: Session = Depends(database.get_db), current_
     if db_admin is None:
         raise HTTPException(status_code=404, detail="Admin not found")
     return crud.delete_admin(db=db, admin_id=admin_id)
+
+# Function to convert public key to JWK format
+def public_key_to_jwk(public_key):
+    public_numbers = public_key.public_numbers()
+    e = base64.urlsafe_b64encode(public_numbers.e.to_bytes(3, byteorder='big')).decode('utf-8').rstrip("=")
+    n = base64.urlsafe_b64encode(public_numbers.n.to_bytes((public_numbers.n.bit_length() + 7) // 8, byteorder='big')).decode('utf-8').rstrip("=")
+    return {
+        "kty": "RSA",
+        "use": "sig",
+        "alg": "RS256",
+        "kid": "1",
+        "n": n,
+        "e": e
+    }
+
+# Endpoint to expose JWKs
+@app.get("/.well-known/jwks.json")
+def get_jwks():
+    jwk = public_key_to_jwk(PUBLIC_KEY)
+    return {"keys": [jwk]}
 
 # Create a default admin user if it doesn't exist
 @app.on_event("startup")
