@@ -17,7 +17,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DEFAULT_ADMIN_USERNAME=""
-      - DEFAULT_ADMIN_EMAIL=""
-      - DEFAULT_ADMIN_PASSWORD=""
-      - SECRET="openssl rand -hex 32"
+      - DEFAULT_ADMIN_USERNAME=test
+      - DEFAULT_ADMIN_EMAIL=test@test.com
+      - DEFAULT_ADMIN_PASSWORD=test
+    volumes:
+      - ./backend/private_key.pem:/app/private_key.pem:ro
+      - ./backend/public_key.pem:/app/public_key.pem:ro

@@ -11,14 +11,14 @@ from cryptography.hazmat.backends import default_backend
 import base64
 
 # Load the private and public keys
-with open("path/to/private_key.pem", "rb") as f:
+with open("/app/private_key.pem", "rb") as f:
     PRIVATE_KEY = serialization.load_pem_private_key(
         f.read(),
         password=None,
         backend=default_backend()
     )
 
-with open("path/to/public_key.pem", "rb") as f:
+with open("/app/public_key.pem", "rb") as f:
     PUBLIC_KEY = serialization.load_pem_public_key(
         f.read(),
         backend=default_backend()
@@ -31,7 +31,7 @@ app = FastAPI()
 
 # Allow CORS for the frontend origin
 origins = [
-    "http://localhost:3000",  # Adjust this to match your frontend's origin
+    "*",  # Adjust this to match your frontend's origin
 ]
 
 app.add_middleware(
@@ -53,15 +53,28 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, PRIVATE_KEY, algorithm=ALGORITHM)
+
+    # Convert private key to PEM format before encoding JWT
+    private_key_pem = PRIVATE_KEY.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption()
+    )
+
+    # Encode the JWT using the PEM format private key
+    encoded_jwt = jwt.encode(to_encode, private_key_pem, algorithm=ALGORITHM)
     return encoded_jwt
 
 def get_user(db, username: str):
-    user = crud.get_user_by_username(db, username=username)
+    user = crud.get_user_by_username(db, username=username.strip('"'))
     return user
 
 def get_admin(db, username: str):
-    admin = crud.get_admin_by_username(db, username=username)
+    admin = crud.get_admin_by_username(db, username=username.strip('"'))
+    if admin:
+        print(f"Retrieved admin: {admin.__dict__}")
+    else:
+        print("Retrieved admin: None")
     return admin
 
 def authenticate_user(db: Session, username: str, password: str):
@@ -75,8 +88,10 @@ def authenticate_user(db: Session, username: str, password: str):
 def authenticate_admin(db: Session, username: str, password: str):
     admin = get_admin(db, username)
     if not admin:
+        print(f"Admin {username} not found")
         return False
     if not utils.verify_password(password, admin.hashed_password):
+        print(f"Password verification failed for admin {username}")
         return False
     return admin
 
@@ -133,6 +148,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 @app.post("/admin/token", response_model=schemas.Token)
 async def login_for_admin_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
+    print(f"Attempting to authenticate admin: {form_data.username}")
     admin = authenticate_admin(db, form_data.username, form_data.password)
     if not admin:
         raise HTTPException(
@@ -214,17 +230,25 @@ def get_jwks():
 
 # Create a default admin user if it doesn't exist
 @app.on_event("startup")
-def create_default_admin():
-    db = next(database.get_db())
-    admin_username = os.getenv("DEFAULT_ADMIN_USERNAME", "admin")
-    admin_email = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@example.com")
-    admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD", "adminpassword")
-    admin = crud.get_admin_by_username(db, admin_username)
-    if not admin:
-        admin_data = schemas.AdminCreate(
-            username=admin_username,
-            email=admin_email,
-            password=admin_password
-        )
-        crud.create_admin(db, admin_data)
-        print("Default admin user created")
+async def create_default_admin():
+    print("Executing create_default_admin function")
+    try:
+        db = next(database.get_db())
+        admin_username = os.getenv("DEFAULT_ADMIN_USERNAME", "admin")
+        admin_email = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@example.com")
+        admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD", "adminpassword")
+        print(f"Admin credentials - Username: {admin_username}, Email: {admin_email}, Password: {admin_password}")
+        admin = crud.get_admin_by_username(db, admin_username)
+        if not admin:
+            hashed_password = utils.get_password_hash(admin_password)
+            admin_data = schemas.AdminCreate(
+                username=admin_username,
+                email=admin_email,
+                password=admin_password
+            )
+            created_admin = crud.create_admin(db, admin_data)
+            print(f"Default admin user created: {created_admin.__dict__}")
+        else:
+            print(f"Admin {admin_username} already exists: {admin.__dict__}")
+    except Exception as e:
+        print(f"Error creating default admin: {e}")

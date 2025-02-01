@@ -38,7 +38,13 @@ def get_admins(db: Session, skip: int = 0, limit: int = 10):
     return db.query(models.Admin).offset(skip).limit(limit).all()
 
 def get_admin_by_username(db: Session, username: str):
-    return db.query(models.Admin).filter(models.Admin.username == username).first()
+    print(f"Querying admin by username: {username}")
+    admin = db.query(models.Admin).filter(models.Admin.username == username.strip('"')).first()
+    if admin:
+        print(f"Result of admin query: {admin}")
+    else:
+        print("Result of admin query: None")
+    return admin
 
 def create_admin(db: Session, admin: schemas.AdminCreate):
     hashed_password = utils.get_password_hash(admin.password)
@@ -50,6 +56,7 @@ def create_admin(db: Session, admin: schemas.AdminCreate):
     db.add(db_admin)
     db.commit()
     db.refresh(db_admin)
+    print(f"Admin created: {db_admin}")
     return db_admin
 
 def delete_admin(db: Session, admin_id: int):
